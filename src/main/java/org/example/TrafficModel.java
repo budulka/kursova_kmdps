@@ -54,7 +54,14 @@ public class TrafficModel {
         repair = new Process("Ремонтна ділянка", 0, 100, () -> SECTION_TIME);
         exit = new Dispose("Вихід");
 
-
+        // Розгалуження одразу після надходження, до черги (рисунок 2.1).
+        // N1' (пріоритет 2) — одразу до D, без зупинки:
+        //   B(N1') = (G1 = 0) ∨ (Q1 ≠ 0) ∨ (P1 = 1),
+        //   де Q1 ≠ 0 — є машини в черзі Q1 або у F1.
+        //   Машина N1' не займає P1, тому машини з інтервалом < 2 с
+        //   проїжджають без зупинки.
+        // N1 (пріоритет 1) — у чергу Q1 -> F1, без блокувань.
+        // F1 -> P1: B = (G1 = 0) ∨ (P1 = 1) — в'їзд з черги з інтервалом 2 с.
         in1.addNext(f1, 1);
         in1.addNext(repair, 2).setCondition(() -> green1.isBusy() && isEmpty(f1) && p1.hasFreeChannel());
         f1.setNext(p1).setCondition(() -> green1.isBusy() && p1.hasFreeChannel());
@@ -82,15 +89,28 @@ public class TrafficModel {
         model.simulate(time);
     }
 
+    // Машина чекає, поки перебуває в черзі Q, у фіктивному пристрої F
+    // або в пристрої P: у P вона ще не в'їхала на ділянку
+    // (інтервал 2 с між машинами, розгін після вмикання зеленого)
+    private static double waitSum(Process f, Process p) {
+        return f.getMeanQueue() + f.getMeanBusy() + p.getMeanBusy();
+    }
+
     public double meanWait() {
-        return meanWaitingTime(f1.getMeanQueue() + f1.getMeanBusy() + f2.getMeanQueue() + f2.getMeanBusy(),
+        return meanWaitingTime(waitSum(f1, p1) + waitSum(f2, p2),
                 in1.getQuantity() + in2.getQuantity());
     }
-    public double meanWait1() { return meanWaitingTime(f1.getMeanQueue() + f1.getMeanBusy(), in1.getQuantity()); }
-    public double meanWait2() { return meanWaitingTime(f2.getMeanQueue() + f2.getMeanBusy(), in2.getQuantity()); }
+    public double meanWait1() {
+        return meanWaitingTime(waitSum(f1, p1), in1.getQuantity());
+    }
+    public double meanWait2() {
+        return meanWaitingTime(waitSum(f2, p2), in2.getQuantity());
+    }
 
-    // Середній час очікування: (Σ Q·Δt + Σ (зайнятий F)·Δt) / кількість машин, що під'їхали.
-    // Машини маршрутів N1', N2' у F не потрапляють, але входять у знаменник з нульовим очікуванням.
+    // Середній час очікування: (Σ Q·Δt + Σ (зайнятий F)·Δt + Σ (зайнятий P)·Δt)
+    //   / кількість машин, що під'їхали.
+    // Машини маршрутів N1', N2' у Q, F і P не потрапляють,
+    // але входять у знаменник з нульовим очікуванням.
     private static double meanWaitingTime(double totalWait, int arrivals) {
         return arrivals > 0 ? totalWait / arrivals : 0.0;
     }

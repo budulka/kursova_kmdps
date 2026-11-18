@@ -101,7 +101,7 @@ ax.plot(xs, [gw[(x, b2)] for x in xs], "-o", ms=4, lw=2.2, color="#2a7ad6", labe
 ax.plot(xs, [gw[(b1, x)] for x in xs], "-o", ms=4, lw=2.2, color=ACC, label=f"змінюється G2 при G1 = {b1} с")
 lo = min(gw.values()); ax.set_ylim(lo - 8, 235)
 ax.set_xlabel("Тривалість зеленого інтервалу, с"); ax.set_ylabel("Середній час очікування, с")
-ax.legend(frameon=False, loc="center"); fig.savefig(f"{out}/fig4_4.png"); plt.close(fig)
+ax.legend(frameon=False, loc="upper center"); fig.savefig(f"{out}/fig4_4.png"); plt.close(fig)
 
 # 4.5 уточнення
 _, _, Wr = grid("grid_refine.csv")

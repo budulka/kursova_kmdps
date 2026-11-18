@@ -42,11 +42,6 @@ public abstract class Element {
         return addNext(next, 1.0);
     }
 
-    public void setBlock(Element el, boolean status) {
-        router.find(el).setBlocked(status);
-    }
-
-
 
     protected boolean send() {
         if (router.isTerminal()) {
